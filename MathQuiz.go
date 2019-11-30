@@ -10,10 +10,17 @@ import (
 )
 
 type MathRunObject struct {
-	operator       string
-	numOfQuestions int
-	numToTest      int
-	lastNum        int
+	operator        string
+	numOfQuestions  int
+	numToTest       int
+	lastNum         int
+	numberCorrect   int
+	numberIncorrect int
+}
+
+type MathAnswerObject struct {
+	questionString string
+	answer         int
 }
 
 func GetOperator() string {
@@ -80,57 +87,83 @@ func GetNumberToTest() int {
 	return numberToTest
 }
 
-func GenerateQuestions(mathObject MathRunObject) {
-	// var lastNum int
+func DoTheMath(selectedNumber, randomNumber int, operator string) MathAnswerObject {
+	var question MathAnswerObject
 
+	if operator == "addition" {
+		question.questionString = fmt.Sprintf("%d + %d = ", selectedNumber, randomNumber)
+		question.answer = selectedNumber + randomNumber
+	} else if operator == "subtraction" {
+		question.questionString = fmt.Sprintf("%d - %d = ", selectedNumber, randomNumber)
+		question.answer = selectedNumber - randomNumber
+	} else if operator == "multiplication" {
+		question.questionString = fmt.Sprintf("%d x %d = ", selectedNumber, randomNumber)
+		question.answer = selectedNumber * randomNumber
+	} else if operator == "division" {
+		question.questionString = fmt.Sprintf("%d / %d = ", selectedNumber, randomNumber)
+		question.answer = selectedNumber / randomNumber
+	}
+
+	return question
+}
+
+func GenerateQuestions(mathObject *MathRunObject) {
 	s1 := rand.NewSource(time.Now().UnixNano())
 
 	for i := 1; i <= mathObject.numOfQuestions; i++ {
 		r1 := rand.New(s1)
 		randomNumber := r1.Intn(12)
-		fmt.Println("Question", i, ":")
 
 		if randomNumber != mathObject.lastNum {
-			if mathObject.operator == "addition" {
-				fmt.Println("\t", mathObject.numToTest, "+", randomNumber, "= ?")
-			} else if mathObject.operator == "subtraction" {
-				fmt.Println("\t", mathObject.numToTest, "-", randomNumber, "= ?")
-			} else if mathObject.operator == "multiplication" {
-				fmt.Println("\t", mathObject.numToTest, "x", randomNumber, "= ?")
-			} else if mathObject.operator == "division" {
-				fmt.Println("\t", mathObject.numToTest, "/", randomNumber, "= ?")
+			scanner := bufio.NewScanner(os.Stdin)
+
+			fmt.Println("\nQuestion", i, ":")
+			question := DoTheMath(
+				mathObject.numToTest,
+				randomNumber,
+				mathObject.operator)
+
+			fmt.Print("\t", question.questionString)
+			scanner.Scan()
+
+			answerGiven, _ := strconv.Atoi(scanner.Text())
+
+			if answerGiven == question.answer {
+				fmt.Println("\tCorrect!")
+				mathObject.numberCorrect++
+			} else {
+				fmt.Println("\tIncorrect!")
+				mathObject.numberIncorrect++
 			}
 		} else {
 			i--
 		}
 
-		fmt.Println("\n")
-
 		mathObject.lastNum = randomNumber
-
 	}
 }
 
 func main() {
-	// numList := [13]int{0,1,2,3,4,5,6,7,8,9,10,11,12}
 	fmt.Println("\nA Math Quiz App!")
 	fmt.Println("***************************")
 
 	var newMathObj MathRunObject
-	// var numberCorrect int
 
 	newMathObj.operator = GetOperator()
 	newMathObj.numToTest = GetNumberToTest()
 	newMathObj.numOfQuestions = GetNumberOfQuestions()
-	newMathObj.lastNum = 99
+	newMathObj.lastNum = 99  // arbitrary too high number 
+	newMathObj.numberCorrect = 0
+	newMathObj.numberIncorrect = 0
 
-	startTime := time.Now()
+	// startTime := time.Now()
 
-	// var lastNum int
+	// fmt.Println("\nStarting at", startTime)
 
-	fmt.Println("\nStarting at", startTime, "\n")
+	GenerateQuestions(&newMathObj)
 
-	GenerateQuestions(newMathObj)
+	fmt.Printf("\nNumber Correct: %d\nNumber Incorrect: %d",
+		newMathObj.numberCorrect, newMathObj.numberIncorrect)
 
-	fmt.Println("\nFinished!")
+	fmt.Println("\n\nFinished!")
 }
