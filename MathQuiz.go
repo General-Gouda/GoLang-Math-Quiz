@@ -9,7 +9,9 @@ import (
 	"time"
 )
 
-type MathRunObject struct {
+// #########  MathRunObject Struct ######### //
+
+type mathRunObject struct {
 	operator        string
 	numOfQuestions  int
 	numToTest       int
@@ -18,12 +20,80 @@ type MathRunObject struct {
 	numberIncorrect int
 }
 
-type MathAnswerObject struct {
-	questionString string
-	answer         int
+func (mathObject *mathRunObject) generateQuestions() {
+	s1 := rand.NewSource(time.Now().UnixNano())
+
+	for i := 1; i <= mathObject.numOfQuestions; i++ {
+		r1 := rand.New(s1)
+		// randomNumber := r1.Intn(12)
+		var randomNumber int
+
+		if mathObject.operator == "division" {
+			randomNumber = r1.Intn((mathObject.numToTest/2))
+			// randomNumber = r1.Intn(12)
+		} else {
+			randomNumber = r1.Intn(12)
+		}
+
+		if randomNumber != mathObject.lastNum {
+			scanner := bufio.NewScanner(os.Stdin)
+
+			fmt.Printf("\nQuestion %d: ", i)
+			questionString, answer := mathObject.doTheMath(randomNumber)
+
+			fmt.Print(questionString)
+			scanner.Scan()
+
+			answerGiven, _ := strconv.Atoi(scanner.Text())
+
+			if answerGiven == answer {
+				fmt.Println("\tCorrect!")
+				mathObject.numberCorrect++
+			} else {
+				fmt.Printf("\tIncorrect! The correct answer is %d!\n", answer)
+				mathObject.numberIncorrect++
+			}
+		} else {
+			i--
+		}
+
+		mathObject.lastNum = randomNumber
+	}
 }
 
-func GetOperator() string {
+func (mathObject *mathRunObject) doTheMath(randomNumber int) (string, int) {
+	var questionString string
+	var answer int
+
+	if mathObject.operator == "addition" {
+		questionString = fmt.Sprintf("%d + %d = ", mathObject.numToTest, randomNumber)
+		answer = mathObject.numToTest + randomNumber
+	} else if mathObject.operator == "subtraction" {
+		questionString = fmt.Sprintf("%d - %d = ", mathObject.numToTest, randomNumber)
+		answer = mathObject.numToTest - randomNumber
+	} else if mathObject.operator == "multiplication" {
+		questionString = fmt.Sprintf("%d x %d = ", mathObject.numToTest, randomNumber)
+		answer = mathObject.numToTest * randomNumber
+	} else if mathObject.operator == "division" {
+		if randomNumber == 0 || randomNumber == mathObject.lastNum{
+			randomNumber++ // ensure that randomNumber is not 0 in division
+		}
+
+		if randomNumber > mathObject.numToTest {
+			questionString = fmt.Sprintf("Remainder of %d / %d = ", randomNumber, mathObject.numToTest)
+			answer = randomNumber / mathObject.numToTest
+		} else {
+			questionString = fmt.Sprintf("Remainder of %d / %d = ", mathObject.numToTest, randomNumber)
+			answer = mathObject.numToTest / randomNumber
+		}
+	}
+
+	return questionString, answer
+}
+
+// #########  End - MathRunObject Struct ######### //
+
+func getOperator() string {
 	scanner := bufio.NewScanner(os.Stdin)
 	var operator string
 
@@ -32,21 +102,22 @@ func GetOperator() string {
 		scanner.Scan()
 		op := scanner.Text()
 
-		if op == "+" {
+		switch op {
+		case "+":
 			operator = "addition"
-			break
-		} else if op == "-" {
+		case "-":
 			operator = "subtraction"
-			break
-		} else if op == "x" {
+		case "x":
 			operator = "multiplication"
-			break
-		} else if op == "/" {
+		case "/":
 			operator = "division"
-			break
-		} else {
+		default:
 			fmt.Println("Incorrect operator selected!")
-			fmt.Println("Please select + - or *")
+			fmt.Println("Please select + - * or /")
+		}
+
+		if operator != "" {
+			break
 		}
 	}
 
@@ -55,7 +126,7 @@ func GetOperator() string {
 	return operator
 }
 
-func GetNumberOfQuestions() int {
+func getNumberOfQuestions() int {
 	scanner := bufio.NewScanner(os.Stdin)
 	fmt.Print("How many questions? ")
 	scanner.Scan()
@@ -70,7 +141,7 @@ func GetNumberOfQuestions() int {
 	return numberOfQuestions
 }
 
-func GetNumberToTest() int {
+func getNumberToTest(operator string) int {
 	scanner := bufio.NewScanner(os.Stdin)
 	fmt.Print("What number do you want to test against? ")
 	scanner.Scan()
@@ -84,83 +155,38 @@ func GetNumberToTest() int {
 		numberToTest = r1.Intn(12)
 	}
 
-	return numberToTest
-}
-
-func DoTheMath(selectedNumber, randomNumber int, operator string) MathAnswerObject {
-	var question MathAnswerObject
-
-	if operator == "addition" {
-		question.questionString = fmt.Sprintf("%d + %d = ", selectedNumber, randomNumber)
-		question.answer = selectedNumber + randomNumber
-	} else if operator == "subtraction" {
-		question.questionString = fmt.Sprintf("%d - %d = ", selectedNumber, randomNumber)
-		question.answer = selectedNumber - randomNumber
-	} else if operator == "multiplication" {
-		question.questionString = fmt.Sprintf("%d x %d = ", selectedNumber, randomNumber)
-		question.answer = selectedNumber * randomNumber
-	} else if operator == "division" {
-		question.questionString = fmt.Sprintf("%d / %d = ", selectedNumber, randomNumber)
-		question.answer = selectedNumber / randomNumber
-	}
-
-	return question
-}
-
-func GenerateQuestions(mathObject *MathRunObject) {
-	s1 := rand.NewSource(time.Now().UnixNano())
-
-	for i := 1; i <= mathObject.numOfQuestions; i++ {
+	if numberToTest <= 1 && operator == "division" {
+		oldNum := numberToTest
+		s1 := rand.NewSource(time.Now().UnixNano())
 		r1 := rand.New(s1)
-		randomNumber := r1.Intn(12)
-
-		if randomNumber != mathObject.lastNum {
-			scanner := bufio.NewScanner(os.Stdin)
-
-			fmt.Println("\nQuestion", i, ":")
-			question := DoTheMath(
-				mathObject.numToTest,
-				randomNumber,
-				mathObject.operator)
-
-			fmt.Print("\t", question.questionString)
-			scanner.Scan()
-
-			answerGiven, _ := strconv.Atoi(scanner.Text())
-
-			if answerGiven == question.answer {
-				fmt.Println("\tCorrect!")
-				mathObject.numberCorrect++
-			} else {
-				fmt.Println("\tIncorrect!")
-				mathObject.numberIncorrect++
-			}
-		} else {
-			i--
-		}
-
-		mathObject.lastNum = randomNumber
+		numberToTest = r1.Intn(12)
+		fmt.Printf("%d cannot be select while testing against division. Selecting random number - %d.\n", oldNum, numberToTest)
 	}
+
+	return numberToTest
 }
 
 func main() {
 	fmt.Println("\nA Math Quiz App!")
 	fmt.Println("***************************")
 
-	var newMathObj MathRunObject
+	operator := getOperator()
+	numToTest := getNumberToTest(operator)
 
-	newMathObj.operator = GetOperator()
-	newMathObj.numToTest = GetNumberToTest()
-	newMathObj.numOfQuestions = GetNumberOfQuestions()
-	newMathObj.lastNum = 99  // arbitrary too high number 
-	newMathObj.numberCorrect = 0
-	newMathObj.numberIncorrect = 0
+	newMathObj := mathRunObject{
+		operator:        operator,
+		numToTest:       numToTest,
+		numOfQuestions:  getNumberOfQuestions(),
+		lastNum:         99, // arbitrary too high number
+		numberCorrect:   0,
+		numberIncorrect: 0,
+	}
 
-	// startTime := time.Now()
+	startTime := time.Now()
 
-	// fmt.Println("\nStarting at", startTime)
+	newMathObj.generateQuestions()
 
-	GenerateQuestions(&newMathObj)
+	fmt.Printf("\nElapsed Time: %s \n", time.Since(startTime))
 
 	fmt.Printf("\nNumber Correct: %d\nNumber Incorrect: %d",
 		newMathObj.numberCorrect, newMathObj.numberIncorrect)
