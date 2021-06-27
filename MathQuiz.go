@@ -69,13 +69,18 @@ func (mathObject *mathRunObject) doTheMath(randomNumber int) (string, int) {
 		questionString = fmt.Sprintf("%d + %d = ", mathObject.numToTest, randomNumber)
 		answer = mathObject.numToTest + randomNumber
 	} else if mathObject.operator == "subtraction" {
-		questionString = fmt.Sprintf("%d - %d = ", mathObject.numToTest, randomNumber)
-		answer = mathObject.numToTest - randomNumber
+		if mathObject.numToTest < randomNumber {
+			questionString = fmt.Sprintf("%d - %d = ", randomNumber, mathObject.numToTest)
+			answer = randomNumber - mathObject.numToTest
+		} else {
+			questionString = fmt.Sprintf("%d - %d = ", mathObject.numToTest, randomNumber)
+			answer = mathObject.numToTest - randomNumber
+		}
 	} else if mathObject.operator == "multiplication" {
 		questionString = fmt.Sprintf("%d x %d = ", mathObject.numToTest, randomNumber)
 		answer = mathObject.numToTest * randomNumber
 	} else if mathObject.operator == "division" {
-		if randomNumber == 0 || randomNumber == mathObject.lastNum{
+		if randomNumber == 0 || randomNumber == mathObject.lastNum {
 			randomNumber++ // ensure that randomNumber is not 0 in division
 		}
 
